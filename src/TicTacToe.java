@@ -4,6 +4,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
@@ -20,6 +21,7 @@ import java.util.Scanner;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.event.MouseInputListener;
 
 public class TicTacToe implements Runnable {
 
@@ -27,8 +29,10 @@ public class TicTacToe implements Runnable {
 	private int port = 22222;
 	private Scanner scanner = new Scanner(System.in);
 	private JFrame frame;
-	private final int WIDTH = 506;
-	private final int HEIGHT = 527;
+	private final int WIDTH = 1080;
+	private final int HEIGHT = 720;
+  private final int BOARDWIDTH = 1080/20;
+  private final int BOARDHEIGHT = 720/20;
 	private Thread thread;
 
 	private Painter painter;
@@ -44,7 +48,7 @@ public class TicTacToe implements Runnable {
 	private BufferedImage redCircle;
 	private BufferedImage blueCircle;
 
-	private String[] spaces = new String[9];
+	private Board b = new Board(BOARDWIDTH, BOARDHEIGHT);
 
 	private boolean yourTurn = false;
 	private boolean circle = true;
@@ -89,7 +93,7 @@ public class TicTacToe implements Runnable {
 			port = scanner.nextInt();
 		}
 
-		loadImages();
+		// loadImages();
 
 		painter = new Painter();
 		painter.setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -122,8 +126,8 @@ public class TicTacToe implements Runnable {
 		}
 	}
 
-	private void render(Graphics g) {
-		g.drawImage(board, 0, 0, null);
+	private void render(Graphics g, Point mouseLoc) {
+		b.draw(g, mouseLoc);
 		if (unableToCommunicateWithOpponent) {
 			g.setColor(Color.RED);
 			g.setFont(smallerFont);
@@ -135,23 +139,23 @@ public class TicTacToe implements Runnable {
 		}
 
 		if (accepted) {
-			for (int i = 0; i < spaces.length; i++) {
-				if (spaces[i] != null) {
-					if (spaces[i].equals("X")) {
-						if (circle) {
-							g.drawImage(redX, (i % 3) * lengthOfSpace + 10 * (i % 3), (int) (i / 3) * lengthOfSpace + 10 * (int) (i / 3), null);
-						} else {
-							g.drawImage(blueX, (i % 3) * lengthOfSpace + 10 * (i % 3), (int) (i / 3) * lengthOfSpace + 10 * (int) (i / 3), null);
-						}
-					} else if (spaces[i].equals("O")) {
-						if (circle) {
-							g.drawImage(blueCircle, (i % 3) * lengthOfSpace + 10 * (i % 3), (int) (i / 3) * lengthOfSpace + 10 * (int) (i / 3), null);
-						} else {
-							g.drawImage(redCircle, (i % 3) * lengthOfSpace + 10 * (i % 3), (int) (i / 3) * lengthOfSpace + 10 * (int) (i / 3), null);
-						}
-					}
-				}
-			}
+                                                          // for (int i = 0; i < spaces.length; i++) {
+                                                          // 	if (spaces[i] != null) {
+                                                          // 		if (spaces[i].equals("X")) {
+                                                          // 			if (circle) {
+                                                          // 				g.drawImage(redX, (i % 3) * lengthOfSpace + 10 * (i % 3), (int) (i / 3) * lengthOfSpace + 10 * (int) (i / 3), null);
+                                                          // 			} else {
+                                                          // 				g.drawImage(blueX, (i % 3) * lengthOfSpace + 10 * (i % 3), (int) (i / 3) * lengthOfSpace + 10 * (int) (i / 3), null);
+                                                          // 			}
+                                                          // 		} else if (spaces[i].equals("O")) {
+                                                          // 			if (circle) {
+                                                          // 				g.drawImage(blueCircle, (i % 3) * lengthOfSpace + 10 * (i % 3), (int) (i / 3) * lengthOfSpace + 10 * (int) (i / 3), null);
+                                                          // 			} else {
+                                                          // 				g.drawImage(redCircle, (i % 3) * lengthOfSpace + 10 * (i % 3), (int) (i / 3) * lengthOfSpace + 10 * (int) (i / 3), null);
+                                                          // 			}
+                                                          // 		}
+                                                          // 	}
+                                                          // }
 			if (won || enemyWon) {
 				Graphics2D g2 = (Graphics2D) g;
 				g2.setStroke(new BasicStroke(10));
@@ -192,8 +196,8 @@ public class TicTacToe implements Runnable {
 		if (!yourTurn && !unableToCommunicateWithOpponent) {
 			try {
 				int space = dis.readInt();
-				if (circle) spaces[space] = "X";
-				else spaces[space] = "O";
+				if (circle) b.set(space/BOARDWIDTH, space%BOARDWIDTH, false, Color.RED);
+				else b.set(space/BOARDWIDTH, space%BOARDWIDTH, true, Color.RED);
 				checkForEnemyWin();
 				checkForTie();
 				yourTurn = true;
@@ -256,7 +260,7 @@ public class TicTacToe implements Runnable {
 			dos = new DataOutputStream(socket.getOutputStream());
 			dis = new DataInputStream(socket.getInputStream());
 			accepted = true;
-			System.out.println("CLIENT HAS REQUESTED TO JOIN, AND WE HAVE ACCEPTED");
+			System.out.println("Opponent found. Let the challenge begin!");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -298,6 +302,10 @@ public class TicTacToe implements Runnable {
 		}
 	}
 
+  public static void main(String[] args) {
+    TicTacToe ticTacToe = new TicTacToe();
+  }
+
 	private class Painter extends JPanel implements MouseListener {
 		private static final long serialVersionUID = 1L;
 
@@ -311,7 +319,7 @@ public class TicTacToe implements Runnable {
 		@Override
 		public void paintComponent(Graphics g) {
 			super.paintComponent(g);
-			render(g);
+			render(g, getMousePosition());
 		}
 
 		@Override
