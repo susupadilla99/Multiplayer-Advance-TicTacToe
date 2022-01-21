@@ -94,7 +94,8 @@ public class TicTacToe implements Runnable {
 		painter = new Painter();
 		painter.setPreferredSize(new Dimension(WIDTH, HEIGHT));
 
-		if (!connect()) initializeServer();
+		if (!connect())
+      initializeServer();
 
 		frame = new JFrame();
 		frame.setTitle("Tic-Tac-Toe");
@@ -295,11 +296,6 @@ public class TicTacToe implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-	@SuppressWarnings("unused")
-	public static void main(String[] args) {
-		TicTacToe ticTacToe = new TicTacToe();
 	}
 
 	private class Painter extends JPanel implements MouseListener {
