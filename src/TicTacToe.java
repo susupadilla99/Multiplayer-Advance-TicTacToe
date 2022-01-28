@@ -127,7 +127,9 @@ public class TicTacToe implements Runnable {
 	}
 
 	private void render(Graphics g, Point mouseLoc) {
+    // draw board and existing XOs
 		b.draw(g, mouseLoc);
+    // draw when no opponent found
 		if (unableToCommunicateWithOpponent) {
 			g.setColor(Color.RED);
 			g.setFont(smallerFont);
@@ -137,7 +139,7 @@ public class TicTacToe implements Runnable {
 			g.drawString(unableToCommunicateWithOpponentString, WIDTH / 2 - stringWidth / 2, HEIGHT / 2);
 			return;
 		}
-
+    // draw when found opponent
 		if (accepted) {
                                                           // for (int i = 0; i < spaces.length; i++) {
                                                           // 	if (spaces[i] != null) {
@@ -156,6 +158,7 @@ public class TicTacToe implements Runnable {
                                                           // 		}
                                                           // 	}
                                                           // }
+      // draw if you or enemy won
 			if (won || enemyWon) {
 				Graphics2D g2 = (Graphics2D) g;
 				g2.setStroke(new BasicStroke(10));
