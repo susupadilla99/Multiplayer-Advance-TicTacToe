@@ -47,6 +47,12 @@ public class Board {
     }
   }
 
+  public int getPosition(Point mouseLoc) {
+    int i = mouseLoc.x/20;
+    int j = mouseLoc.y/20;
+    return i*squares[0].length + j;
+  }
+
   public boolean set(Point mouseLoc, boolean o, Color col) {
     if (mouseLoc == null) return false;
     int x = (int)mouseLoc.getX()/20;

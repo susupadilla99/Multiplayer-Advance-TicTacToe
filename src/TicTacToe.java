@@ -338,7 +338,7 @@ public class TicTacToe implements Runnable {
 						if (!circle) spaces[position] = "X";
 						else spaces[position] = "O";
 						yourTurn = false;
-						repaint();
+						repaint();  
 						Toolkit.getDefaultToolkit().sync();
 
 						try {

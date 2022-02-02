@@ -11,13 +11,14 @@ import java.net.Socket;
 import java.util.Scanner;
 import java.awt.Graphics;
 import java.awt.Point;
+import java.awt.Toolkit;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 public class Test extends Thread{
-  private final int WIDTH = 1080;
-  private final int HEIGHT = 720;
+  private final int WIDTH = 600;
+  private final int HEIGHT = 600;
   private final int BOARDWIDTH = WIDTH/20;
   private final int BOARDHEIGHT = HEIGHT/20;
 
@@ -36,12 +37,10 @@ public class Test extends Thread{
   private int port;
 
   //logic components
+  private enum State {noConnection, connectionAccepted, connectionLost, gameEnded};
+  State state = State.noConnection;
   private boolean circle = true;
-  private boolean gameFinished = false;
   private boolean yourTurn = false;
-	private boolean accepted = false;
-	private boolean unableToCommunicateWithOpponent = false;
-	private int lengthOfSpace = 160;
 	private int errors = 0;
 
   public Test() {
@@ -76,7 +75,7 @@ public class Test extends Thread{
       socket = new Socket(ip, port);
       dos = new DataOutputStream(socket.getOutputStream());
       dis = new DataInputStream(socket.getInputStream());
-      accepted = true;
+      state = State.connectionAccepted;
     } catch (IOException e) {
       e.printStackTrace();
       System.out.println("Unable to connect to the address : " + ip + ":" + port + ". Starting a server ");
@@ -102,7 +101,7 @@ public class Test extends Thread{
       socket = serverSocket.accept();
       dos = new DataOutputStream(socket.getOutputStream());
       dis = new DataInputStream(socket.getInputStream());
-      accepted = true;
+      state = State.connectionAccepted;
       System.out.println("Opponent found. Let's begin");   
     } catch (IOException e) {
       e.printStackTrace();
@@ -110,17 +109,19 @@ public class Test extends Thread{
   }
 
   private void tick() {
-    if (errors >= 10) unableToCommunicateWithOpponent = true;
+    if (errors >= 10) state = State.connectionLost;
 
-    if (!yourTurn && !unableToCommunicateWithOpponent) {
+    if (!yourTurn && state==State.connectionAccepted) {
       try {
         int space = dis.readInt();
-        if (circle) board.set(new Point(space/BOARDHEIGHT, space%BOARDHEIGHT), false, Color.RED);
-        else board.set(new Point(space/BOARDHEIGHT, space%BOARDHEIGHT), true, Color.BLUE);
+        int spaceX = space/BOARDHEIGHT*20;
+        int spaceY = space%BOARDHEIGHT*20;
+        if (circle) board.set(new Point(spaceX, spaceY), false, Color.RED);
+        else board.set(new Point(spaceX, spaceY), true, Color.BLUE);
         if (board.check()) {
           if (board.checkXWin()) System.out.println("X has Won");
           if (board.checkOWin()) System.out.println("O has Won");
-          gameFinished = true;
+          state = State.gameEnded;
         }
         yourTurn = true;
       } catch (IOException e) {
@@ -136,11 +137,15 @@ public class Test extends Thread{
 
   @Override
   public void run() {
-    while (!gameFinished) {
+    while (state!=State.gameEnded) {
       tick();
       painter.repaint();
-      if (!circle && !accepted) {
+      if (!circle && state==State.noConnection) {
         listenForServerRequest();
+      }
+      if (state == State.connectionLost) {
+        System.err.println("Connection Lost. Game terminated");
+        System.exit(1);
       }
     }
     painter.repaint();
@@ -173,17 +178,27 @@ public class Test extends Thread{
 
 		@Override
 		public void mouseClicked(MouseEvent e) {
-			if (accepted) {
-        if (!yourTurn && !unableToCommunicateWithOpponent && !gameFinished) {
-          
-        }
+      if (yourTurn && state==State.connectionAccepted) {
+        if (board.set(getMousePosition(), circle, Color.BLUE)) {
+          int pos = board.getPosition(getMousePosition());
+          yourTurn = !yourTurn;
+          repaint();
+          Toolkit.getDefaultToolkit().sync();
+          try {
+            dos.writeInt(pos);
+            dos.flush();
+          } catch (IOException exception) {
+            errors++;
+            exception.printStackTrace();
+          }
       }
-      if (board.check()) {
-        if (board.checkXWin()) System.out.println("X has Won");
-        if (board.checkOWin()) System.out.println("O has Won");
-        gameFinished = true;
-      }
-		}
+    }
+    if (board.check()) {
+      if (board.checkXWin()) System.out.println("X has Won");
+      if (board.checkOWin()) System.out.println("O has Won");
+      state = State.gameEnded;
+    }
+  }
 
 		@Override
 		public void mousePressed(MouseEvent e) {
