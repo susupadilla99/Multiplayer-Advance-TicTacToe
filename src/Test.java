@@ -1,7 +1,13 @@
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.RenderingHints;
+import java.awt.Toolkit;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -9,9 +15,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Scanner;
-import java.awt.Graphics;
-import java.awt.Point;
-import java.awt.Toolkit;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -26,6 +29,7 @@ public class Test extends Thread{
   private Painter painter;
   private JFrame frame;
   private Board board;
+  private Font font = new Font("Verdana", Font.BOLD, 14);
   
   //network components
   private ServerSocket serverSocket;
@@ -41,6 +45,7 @@ public class Test extends Thread{
   State state = State.noConnection;
   private boolean circle = true;
   private boolean yourTurn = false;
+  private boolean won = false;
 	private int errors = 0;
 
   public Test() {
@@ -133,6 +138,33 @@ public class Test extends Thread{
 
   public void draw(Graphics g, Point mouseLoc) {
     board.draw(g, mouseLoc);
+    Graphics2D g2 = (Graphics2D) g;
+    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    g.setFont(font);
+    g.setColor(Color.RED);
+    int offset = 5;
+    switch (state) {
+      case noConnection:
+        String noConnectionString = "No connections detected. Waiting for opponent to appear";
+        int stringWidth1 = g2.getFontMetrics().stringWidth(noConnectionString);
+        g.drawString(noConnectionString, WIDTH/2 - stringWidth1/2, HEIGHT/2 - offset);
+        break;
+      case connectionLost:
+        String connectionLostString = "Connection to opponent lost. Game terminating";
+        int stringWidth2 = g2.getFontMetrics().stringWidth(connectionLostString);
+        g.drawString(connectionLostString, WIDTH/2 - stringWidth2/2, HEIGHT/2 - offset);
+        break;
+      case gameEnded:
+        String gameEndedString = "";
+        if (won) gameEndedString = "You won";
+        else gameEndedString = "You Lost";
+        int stringWidth3 = g2.getFontMetrics().stringWidth(gameEndedString);
+        g.drawString(gameEndedString, WIDTH/2 - stringWidth3/2, HEIGHT/2 - offset);
+        break;
+      case connectionAccepted:
+        //do nothing
+        break;
+    }
   }
 
   @Override
@@ -144,6 +176,10 @@ public class Test extends Thread{
         listenForServerRequest();
       }
       if (state == State.connectionLost) {
+        painter.repaint();
+        try {
+          Thread.sleep(2000);
+        } catch (InterruptedException e) {}
         System.err.println("Connection Lost. Game terminated");
         System.exit(1);
       }
@@ -194,8 +230,14 @@ public class Test extends Thread{
       }
     }
     if (board.check()) {
-      if (board.checkXWin()) System.out.println("X has Won");
-      if (board.checkOWin()) System.out.println("O has Won");
+      boolean xWin = board.checkXWin();
+      boolean oWin = board.checkOWin();
+      if ((xWin && !circle) || (oWin && circle)) {
+        won = true;
+        System.out.println("You won");
+      } else {
+        System.out.println("You lost");
+      }
       state = State.gameEnded;
     }
   }
