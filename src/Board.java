@@ -1,6 +1,7 @@
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Point;
+import java.util.Optional;
 
 public class Board {
   private Square[][] squares;
@@ -8,6 +9,7 @@ public class Board {
   private boolean oWin;
   private Square winningSquare;
   private String winningDirection;
+  private Optional<Square> lastMove = Optional.empty();
 
   public Board(int pX, int pY) {
     squares = new Square[pX][pY];
@@ -48,6 +50,8 @@ public class Board {
         squares[i][j].draw(g, mouseLoc);
       }
     }
+    if (lastMove.isPresent())
+      lastMove.get().drawHighlight(g, Color.BLUE);
     if (xWin || oWin)
       drawHighlight(g);
   }
@@ -62,48 +66,52 @@ public class Board {
     if (mouseLoc == null) return false;
     int x = (int)mouseLoc.getX()/20;
     int y = (int)mouseLoc.getY()/20;
-    return squares[x][y].set(o, col);
+    if (squares[x][y].set(o, col)) {
+      lastMove = Optional.of(squares[x][y]);
+      return true;
+    }
+    return false;
   }  
 
   private void drawHighlight(Graphics g){
     if (winningDirection.equals("left")) {
       for (int i=0; i<5; i++) {
-        squares[winningSquare.x/20-i][winningSquare.y/20].drawHighlight(g);
+        squares[winningSquare.x/20-i][winningSquare.y/20].drawHighlight(g, Color.YELLOW);
       }
     }
     if (winningDirection.equals("right")) {
       for (int i=0; i<5; i++) {
-        squares[winningSquare.x/20+i][winningSquare.y/20].drawHighlight(g);
+        squares[winningSquare.x/20+i][winningSquare.y/20].drawHighlight(g, Color.YELLOW);
       }
     }
     if (winningDirection.equals("up")) {
       for (int i=0; i<5; i++) {
-        squares[winningSquare.x/20][winningSquare.y/20-i].drawHighlight(g);
+        squares[winningSquare.x/20][winningSquare.y/20-i].drawHighlight(g, Color.YELLOW);
       }
     }
     if (winningDirection.equals("down")) {
       for (int i=0; i<5; i++) {
-        squares[winningSquare.x/20][winningSquare.y/20+i].drawHighlight(g);
+        squares[winningSquare.x/20][winningSquare.y/20+i].drawHighlight(g, Color.YELLOW);
       }
     }
     if (winningDirection.equals("up left")) {
       for (int i=0; i<5; i++) {
-        squares[winningSquare.x/20-i][winningSquare.y/20-i].drawHighlight(g);
+        squares[winningSquare.x/20-i][winningSquare.y/20-i].drawHighlight(g, Color.YELLOW);
       }
     }
     if (winningDirection.equals("up right")) {
       for (int i=0; i<5; i++) {
-        squares[winningSquare.x/20+i][winningSquare.y/20-i].drawHighlight(g);
+        squares[winningSquare.x/20+i][winningSquare.y/20-i].drawHighlight(g, Color.YELLOW);
       }
     }
     if (winningDirection.equals("down left")) {
       for (int i=0; i<5; i++) {
-        squares[winningSquare.x/20-i][winningSquare.y/20+i].drawHighlight(g);
+        squares[winningSquare.x/20-i][winningSquare.y/20+i].drawHighlight(g, Color.YELLOW);
       }
     }
     if (winningDirection.equals("down right")) {
       for (int i=0; i<5; i++) {
-        squares[winningSquare.x/20+i][winningSquare.y/20+i].drawHighlight(g);
+        squares[winningSquare.x/20+i][winningSquare.y/20+i].drawHighlight(g, Color.YELLOW);
       }
     }
   }

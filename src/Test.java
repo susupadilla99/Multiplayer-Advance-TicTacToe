@@ -90,6 +90,36 @@ public class Test extends Thread{
     return true;
   }
 
+  public void draw(Graphics g, Point mouseLoc) {
+    board.draw(g, mouseLoc);
+    drawSituationString(g);
+    drawTurn(g);
+  }
+
+  @Override
+  public void run() {
+    while (state!=State.gameEnded) {
+      tick();
+      painter.repaint();
+      if (!circle && state==State.noConnection) {
+        listenForServerRequest();
+      }
+      if (state == State.connectionLost) {
+        painter.repaint();
+        try {
+          Thread.sleep(2000);
+        } catch (InterruptedException e) {}
+        System.err.println("Connection Lost. Game terminated");
+        System.exit(1);
+      }
+    }
+    painter.repaint();
+    try {
+      Thread.sleep(2000);
+    } catch (InterruptedException e) {}
+    System.exit(0);
+  }
+
   private void initializeServer() {
     try {
       serverSocket = new ServerSocket(port, 8, InetAddress.getByName(ip));
@@ -136,8 +166,26 @@ public class Test extends Thread{
     }
   }
 
-  public void draw(Graphics g, Point mouseLoc) {
-    board.draw(g, mouseLoc);
+  private void drawTurn(Graphics g) {
+    String turnString;
+    if (yourTurn) turnString = "Your Turn";
+    else turnString = "Enemy Turn";
+    Graphics2D g2 = (Graphics2D) g;
+    int stringWidth = g2.getFontMetrics().stringWidth(turnString);
+    int stringHeight = 20;
+    int stringX = (WIDTH-stringWidth)/2;
+    int stringY = 0;
+    int offset = 10;
+    g.setColor(Color.WHITE);
+    g.fillRect(stringX-(offset/2), stringY, stringWidth+offset, stringHeight);
+    g.setColor(Color.BLACK);
+    g.drawRect(stringX-(offset/2), stringY, stringWidth+offset, stringHeight);
+    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    g.setFont(font);
+    g.drawString(turnString, stringX, 15);
+  }
+
+  private void drawSituationString(Graphics g) {
     Graphics2D g2 = (Graphics2D) g;
     g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
     g.setFont(font);
@@ -156,8 +204,14 @@ public class Test extends Thread{
         break;
       case gameEnded:
         String gameEndedString = "";
-        if (won) gameEndedString = "You won";
-        else gameEndedString = "You Lost";
+        if (won) {
+          g.setColor(Color.GREEN);
+          gameEndedString = "You won";
+        }
+        else  {
+          g.setColor(Color.RED);
+          gameEndedString = "You Lost";
+        }
         int stringWidth3 = g2.getFontMetrics().stringWidth(gameEndedString);
         g.drawString(gameEndedString, WIDTH/2 - stringWidth3/2, HEIGHT/2 - offset);
         break;
@@ -165,30 +219,6 @@ public class Test extends Thread{
         //do nothing
         break;
     }
-  }
-
-  @Override
-  public void run() {
-    while (state!=State.gameEnded) {
-      tick();
-      painter.repaint();
-      if (!circle && state==State.noConnection) {
-        listenForServerRequest();
-      }
-      if (state == State.connectionLost) {
-        painter.repaint();
-        try {
-          Thread.sleep(2000);
-        } catch (InterruptedException e) {}
-        System.err.println("Connection Lost. Game terminated");
-        System.exit(1);
-      }
-    }
-    painter.repaint();
-    try {
-      Thread.sleep(2000);
-    } catch (InterruptedException e) {}
-    System.exit(0);
   }
 
   public static void main(String[] args) {

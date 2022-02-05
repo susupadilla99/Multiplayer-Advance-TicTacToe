@@ -34,8 +34,8 @@ public class Square extends Rectangle{
       drawXO(g);
   }
 
-  public void drawHighlight(Graphics g) {
-    g.setColor(Color.RED);
+  public void drawHighlight(Graphics g, Color col) {
+    g.setColor(col);
     g.fillRect(x, y, size, size);
     g.setColor(Color.BLACK);
     g.drawRect(x, y, size, size);
