@@ -34,6 +34,14 @@ public class Square extends Rectangle{
       drawXO(g);
   }
 
+  public void drawHighlight(Graphics g) {
+    g.setColor(Color.RED);
+    g.fillRect(x, y, size, size);
+    g.setColor(Color.BLACK);
+    g.drawRect(x, y, size, size);
+    if (used)
+      drawXO(g);
+  }
 
   public boolean isO() {
     return used&oValue;

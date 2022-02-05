@@ -6,6 +6,8 @@ public class Board {
   private Square[][] squares;
   private boolean xWin;
   private boolean oWin;
+  private Square winningSquare;
+  private String winningDirection;
 
   public Board(int pX, int pY) {
     squares = new Square[pX][pY];
@@ -24,6 +26,7 @@ public class Board {
         if (squares[i][j].isUsed() && hasFullLine(i, j, "none", 1)) {
           if (squares[i][j].isX()) xWin = true;
           else oWin = true;
+          winningSquare = squares[i][j];
           return true;
         }
       }
@@ -45,6 +48,14 @@ public class Board {
         squares[i][j].draw(g, mouseLoc);
       }
     }
+    if (xWin || oWin)
+      drawHighlight(g);
+  }
+
+  public int getPosition(Point mouseLoc) {
+    int i = mouseLoc.x/20;
+    int j = mouseLoc.y/20;
+    return i*squares[0].length + j;
   }
 
   public boolean set(Point mouseLoc, boolean o, Color col) {
@@ -53,6 +64,49 @@ public class Board {
     int y = (int)mouseLoc.getY()/20;
     return squares[x][y].set(o, col);
   }  
+
+  private void drawHighlight(Graphics g){
+    if (winningDirection.equals("left")) {
+      for (int i=0; i<5; i++) {
+        squares[winningSquare.x/20-i][winningSquare.y/20].drawHighlight(g);
+      }
+    }
+    if (winningDirection.equals("right")) {
+      for (int i=0; i<5; i++) {
+        squares[winningSquare.x/20+i][winningSquare.y/20].drawHighlight(g);
+      }
+    }
+    if (winningDirection.equals("up")) {
+      for (int i=0; i<5; i++) {
+        squares[winningSquare.x/20][winningSquare.y/20-i].drawHighlight(g);
+      }
+    }
+    if (winningDirection.equals("down")) {
+      for (int i=0; i<5; i++) {
+        squares[winningSquare.x/20][winningSquare.y/20+i].drawHighlight(g);
+      }
+    }
+    if (winningDirection.equals("up left")) {
+      for (int i=0; i<5; i++) {
+        squares[winningSquare.x/20-i][winningSquare.y/20-i].drawHighlight(g);
+      }
+    }
+    if (winningDirection.equals("up right")) {
+      for (int i=0; i<5; i++) {
+        squares[winningSquare.x/20+i][winningSquare.y/20-i].drawHighlight(g);
+      }
+    }
+    if (winningDirection.equals("down left")) {
+      for (int i=0; i<5; i++) {
+        squares[winningSquare.x/20-i][winningSquare.y/20+i].drawHighlight(g);
+      }
+    }
+    if (winningDirection.equals("down right")) {
+      for (int i=0; i<5; i++) {
+        squares[winningSquare.x/20+i][winningSquare.y/20+i].drawHighlight(g);
+      }
+    }
+  }
 
   private boolean hasFullLine(int i, int j, String direction, int val) {
     //check all adjacent squares
@@ -85,42 +139,66 @@ public class Board {
     //check directional squares
     if (direction.equals("right")) {
       boolean nextSquare = i<squares.length-1 && isSameXO(squares[i][j], squares[i+1][j]);
-      if (val == 4) return nextSquare;
+      if (val == 4 && nextSquare) {
+        winningDirection = direction;
+        return true;
+      }
       if (nextSquare) return hasFullLine(i+1, j, "right", val+1);
       return false;
     } else if (direction.equals("left")) {
       boolean nextSquare = i>0 && isSameXO(squares[i][j], squares[i-1][j]);
-      if (val == 4) return nextSquare;
+      if (val == 4 && nextSquare) {
+        winningDirection = direction;
+        return true;
+      }
       if (nextSquare) return hasFullLine(i-1, j, "left", val+1);
       return false;
     } else if (direction.equals("up")) {
       boolean nextSquare = j>0 && isSameXO(squares[i][j], squares[i][j-1]);
-      if (val == 4) return nextSquare;
+      if (val == 4 && nextSquare) {
+        winningDirection = direction;
+        return true;
+      }
       if (nextSquare) return hasFullLine(i, j-1, "up", val+1);
       return false;
     } else if (direction.equals("down")) {
       boolean nextSquare = j<squares.length-1 && isSameXO(squares[i][j], squares[i][j+1]);
-      if (val == 4) return nextSquare;
+      if (val == 4 && nextSquare) {
+        winningDirection = direction;
+        return true;
+      }
       if (nextSquare) return hasFullLine(i, j+1, "down", val+1);
       return false;
     } else if (direction.equals("up right")) {
       boolean nextSquare = i<squares.length-1 && j>0 && isSameXO(squares[i][j], squares[i+1][j-1]);
-      if (val == 4) return nextSquare;
+      if (val == 4 && nextSquare) {
+        winningDirection = direction;
+        return true;
+      }
       if (nextSquare) return hasFullLine(i+1, j-1, "up right", val+1);
       return false;
     } else if (direction.equals("up left")) {
       boolean nextSquare = i>0 && j>0 && isSameXO(squares[i][j], squares[i-1][j-1]);
-      if (val == 4) return nextSquare;
+      if (val == 4 && nextSquare) {
+        winningDirection = direction;
+        return true;
+      }
       if (nextSquare) return hasFullLine(i-1, j-1, "up left", val+1);
       return false;
     } else if (direction.equals("down right")) {
       boolean nextSquare = i<squares.length && j<squares[0].length && isSameXO(squares[i][j], squares[i+1][j+1]);
-      if (val == 4) return nextSquare;
+      if (val == 4 && nextSquare) {
+        winningDirection = direction;
+        return true;
+      }
       if (nextSquare) return hasFullLine(i+1, j+1, "down right", val+1);
       return false;
     } else if (direction.equals("down left")) {
       boolean nextSquare = i>0 && j<squares[0].length-1 && isSameXO(squares[i][j], squares[i-1][j+1]);
-      if (val == 4) return nextSquare;
+      if (val == 4 && nextSquare) {
+        winningDirection = direction;
+        return true;
+      }
       if (nextSquare) return hasFullLine(i-1, j+1, "down left", val+1);
       return false;
     }
