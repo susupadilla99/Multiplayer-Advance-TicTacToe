@@ -14,12 +14,11 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Scanner;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-public class Test extends Thread{
+public class Multiplayer extends Thread{
   private final int WIDTH = 600;
   private final int HEIGHT = 600;
   private final int BOARDWIDTH = WIDTH/20;
@@ -36,7 +35,6 @@ public class Test extends Thread{
   private Socket socket;
   private DataOutputStream dos;
   private DataInputStream dis;
-  private Scanner scanner = new Scanner(System.in);
   private String ip;
   private int port;
 
@@ -48,15 +46,17 @@ public class Test extends Thread{
   private boolean won = false;
 	private int errors = 0;
 
-  public Test() {
-    System.out.println("Please input IP Address:");
-    ip = scanner.nextLine();
-    System.out.println("Please input port:");
-    port = scanner.nextInt();
-    while (port < 0 || port > 65535) {
-      System.out.println("Invalid port. Please input a valid port:");
-      port = scanner.nextInt();
-    }
+  public Multiplayer(String pIP, int pPort) {
+    // System.out.println("Please input IP Address:");
+    // ip = scanner.nextLine();
+    // System.out.println("Please input port:");
+    // port = scanner.nextInt();
+    // while (port < 0 || port > 65535) {
+    //   System.out.println("Invalid port. Please input a valid port:");
+    //   port = scanner.nextInt();
+    // }
+    ip = pIP;
+    port = pPort;
 
     board = new Board(BOARDWIDTH, BOARDHEIGHT);
 
@@ -82,7 +82,7 @@ public class Test extends Thread{
       dis = new DataInputStream(socket.getInputStream());
       state = State.connectionAccepted;
     } catch (IOException e) {
-      e.printStackTrace();
+      // e.printStackTrace();
       System.out.println("Unable to connect to the address : " + ip + ":" + port + ". Starting a server ");
       return false;
     }
@@ -219,11 +219,6 @@ public class Test extends Thread{
         //do nothing
         break;
     }
-  }
-
-  public static void main(String[] args) {
-    Test test = new Test();
-    test.start();
   }
 
 	private class Painter extends JPanel implements MouseListener {
